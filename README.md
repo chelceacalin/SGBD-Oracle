@@ -5,9 +5,9 @@ I've been studying this language for the whole semester, every week learning a n
   
 The main concepts learned and used:  
 
--Cursors  
--Exceptions  
--Procedures  
--Functions  
--Packages  
--Triggers  
+-> Cursors  
+-> Exceptions  
+-> Procedures  
+-> Functions  
+-> Packages  
+-> Triggers  
