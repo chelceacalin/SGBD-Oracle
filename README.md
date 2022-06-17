@@ -5,6 +5,7 @@ I've been studying this language for the whole semester, every week learning a n
   
 The main concepts learned and used:  
 
+-> Variables
 -> Cursors  
 -> Exceptions  
 -> Procedures  
