@@ -1,5 +1,5 @@
--- 1. �n func?ie de salariul instructorului av�nd codul citit de la tastatur?,
---se va afi?a modificat pe ecran noua valoare.
+-- 1. În funcție de salariul instructorului având codul citit de la tastatură,
+--se va afişa modificat pe ecran noua valoare.
 declare
 v_sal instructori.sal%type;
 begin
@@ -11,7 +11,7 @@ end if;
 dbms_output.put_line('Dupa modificare salariul este: '||v_sal);
 end;
 /
- 
+
 
 -- 2. Intoarce rezultatul  intr-o variabila de tip case.
 declare
@@ -27,7 +27,7 @@ end;
 dbms_output.put_line('Dupa modificare salariul este: '||v_sal);
 end;
 /
- 
+
 
 -- 3.  Folosim case care sa nu intoarca rezultatul.
 declare
@@ -43,10 +43,10 @@ end case;
 dbms_output.put_line('Dupa modificare salariul este: '||v_sal);
 end;
 /
- 
 
--- 4.  Se afi?eaz? �n ordine instructorii cu id-urile �n intervalul 1-10 
--- at�t timp c�t salariul acestora este mai mic dec�t media:
+
+-- 4.  Se afişează în ordine instructorii cu id-urile în intervalul 1-10 
+-- atât timp cât salariul acestora este mai mic decât media:
 
 declare
 i number:=1;
@@ -64,8 +64,8 @@ end loop;
 end; 
 /
 
--- 5 . Se afi?eaz? �n ordine instructorii cu id-urile �n intervalul 1-10 
---at�t timp c�t salariul acestora este mai mic dec�t media:  CU WHILE
+-- 5 . Se afişează în ordine instructorii cu id-urile în intervalul 1-10 
+--atât timp cât salariul acestora este mai mic decât media:  CU WHILE
 
 
 declare
@@ -83,9 +83,9 @@ i:=i+1;
 exit when  v_sal<vsalmediu;
 end loop;
 end;  /
- 
--- 6. Se afi?eaz? �n ordine instructorii cu id-urile �n intervalul 1-10 
---at�t timp c�t salariul acestora este mai mic dec�t media: CU FOR
+
+-- 6. Se afişează în ordine instructorii cu id-urile în intervalul 1-10 
+--atât timp cât salariul acestora este mai mic decât media: CU FOR
 declare
 v_sal instructori.sal%type;
 vsalmediu number;
@@ -100,9 +100,9 @@ exit when  v_sal<vsalmediu;
 end loop;
 end; 
 /
- 
--- 7. S? se afi?eze num?rul de elevi ai fiec?rui instructor al c?rui id este situat �n intervalul 1-10
--- s? se �ntrerup? afi?area �n cazul �n care se g?se?te primul instructor din acest interval care nu are elevi
+
+-- 7. Să se afişeze numărul de elevi ai fiecărui instructor al cărui id este situat în intervalul 1-10
+-- să se întrerupă afişarea în cazul în care se găseşte primul instructor din acest interval care nu are elevi
 declare
 v_contor number;
 index1 instructori.id_instructor%type;
@@ -115,7 +115,7 @@ exit when v_contor=0;
 end loop;
 end;
 /
- 
+
 -- 8. Utilizarea unui tablou indexat de tipul instructori.nume 
 DECLARE
 type TEMP is table of instructori.nume%type index by pls_integer;
@@ -135,9 +135,9 @@ end loop;
 dbms_output.put_line('Total instructori in tabloul indexat: '|| v_tab.count);
 END;
 /
- 
 
--- 9. Utilizarea unui tablou indexat de acela?i tip cu un r�nd din tabela Instructori - %ROWTYPE
+
+-- 9. Utilizarea unui tablou indexat de același tip cu un rând din tabela Instructori - %ROWTYPE
 
 DECLARE
 type instructori_Table is table of instructori%rowtype index by pls_integer;
@@ -152,6 +152,4 @@ end loop;
 dbms_output.put_line('Total instructori in tabloul indexat: '|| INSTable.count);
 END;
 /
- 
-
 
