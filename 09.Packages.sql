@@ -1,97 +1,91 @@
--- 1. Creati un trigger care sa fie declansat la inserarea
--- unei intrari noi in tabela instructori
-set serveroutput on;
-CREATE OR REPLACE TRIGGER insInstructor 
-AFTER INSERT on Instructori
-BEGIN
-dbms_output.put_line(' S-a adaugat un instructor');
+--1. Creati un pachet de functii si subprograme
+
+create or replace package ActualizareELEVI is
+PROCEDURE AdaugaELEV(pID elevi.id_elev%type, pNume elevi.nume%type,pPrenume elevi.prenume%type,pVarsta elevi.varsta%type,
+pIDSEDIU elevi.id_sediu_apartenenta%type,pIDINSTRUCTOR elevi.id_instructor%type);
+PROCEDURE Modifica(pID elevi.id_elev%type, pNume elevi.nume%type,pPrenume elevi.prenume%type,pVarsta elevi.varsta%type,
+pIDSEDIU elevi.id_sediu_apartenenta%type,pIDINSTRUCTOR elevi.id_instructor%type);
+--SupraIncarcare
+PROCEDURE ModificaNume(pID elevi.id_elev%type, pNume elevi.nume%type);
+PROCEDURE STERGEELEV(pID elevi.id_elev%type);
+FUNCTION ExistaElev(pID elevi.id_elev%type)
+return BOOLEAN;
+exceptie EXCEPTION;
 END;
 /
- 
 
--- 2. Creati un trigger care sa fie declansat la
--- insert, update si delete si sa insereze in tabela LogsOp
-CREATE TABLE LogsOp 
-(
-tipOperatie CHAR(10), 
-utilizator VARCHAR2(50), 
-data DATE DEFAULT SYSDATE
-);
-CREATE OR REPLACE TRIGGER Tip_ExamenTrigger 
-BEFORE INSERT or UPDATE or DELETE on Tip_Examen 
-DECLARE 
-tipOperatie LogsOp.tipOperatie%TYPE; 
-BEGIN 
-  case
-  when INSERTING then tipOperatie :='Insert';
-  when UPDATING then tipOperatie:='Update';
-  ELSE tipOperatie :='Delete';
-  END case;
-  INSERT INTO LogsOp(tipOperatie, utilizator, data) VALUES (tipOperatie, user, sysdate);
-END;
-/
---Verificarea execu?iei:
---inserarea in tabela
-insert into tip_examen values (11,'Practic');
-Select * from LogsOp;
-
- 
-delete from tip_examen where id_examen=11;
-Select * from LogsOp;
- 
-
--- 3. Creati un trigger care sa fie declansat la
--- inserarea unui examen cu un id peste maximul curent
-
-CREATE OR REPLACE TRIGGER RestrictONTIP_EXAMEN
-BEFORE INSERT OR UPDATE on tip_examen
-FOR EACH ROW
-DECLARE
-idmax tip_examen.ID_EXAMEN%type;
+create or replace package BODY ActualizareELEVI is
+FUNCTION ExistaElev(pID in elevi.id_elev%type)
+return BOOLEAN
+IS
+vId elevi.id_elev%type;
 BEGIN
-select max(id_examen) into idmax from tip_examen;
-if :NEW.id_examen>idmax then
-    Raise_application_error(-20202,' ID-UL ESTE PREA MARE ');
+select id_elev into vID
+from elevi
+where id_elev=pID;
+return true;
+EXCEPTION
+when NO_DATA_FOUND then
+return false;
+END;
+PROCEDURE AdaugaELEV(pID elevi.id_elev%type, pNume elevi.nume%type,pPrenume elevi.prenume%type,pVarsta elevi.varsta%type,
+pIDSEDIU elevi.id_sediu_apartenenta%type,pIDINSTRUCTOR elevi.id_instructor%type)
+IS
+BEGIN
+if ExistaElev(pID) then
+raise exceptie;
+else
+insert into elevi (id_elev,nume,prenume,varsta, id_sediu_apartenenta,id_instructor) values (pID,pNume,pPrenume,pVarsta,pIDSEDIU,pIDINSTRUCTOR);
 end if;
+EXCEPTION
+when exceptie then
+dbms_output.put_line(' Exista deja un elev');
 END;
-/
-insert into tip_examen values (100,'Practic');
-
- 
--- 4. Creati un trigger care sa controleze unicitatea examenelor
-create sequence mysequence
-start with 15
-increment by 1
-maxvalue 100
-nocycle;
-
-CREATE OR REPLACE TRIGGER RestrictUNIC
-BEFORE INSERT  on tip_examen
-FOR EACH ROW
+PROCEDURE Modifica(pID elevi.id_elev%type, pNume elevi.nume%type,pPrenume elevi.prenume%type,pVarsta elevi.varsta%type,
+pIDSEDIU elevi.id_sediu_apartenenta%type,pIDINSTRUCTOR elevi.id_instructor%type) is
 BEGIN
-select mysequence.nextval into :new.id_examen from dual;
+if ExistaElev(pID) then
+update Elevi
+set Nume=pNume,Prenume=pPrenume where
+id_elev=pID;
+else
+raise exceptie;
+end if;
+EXCEPTION
+when exceptie then
+dbms_output.put_line(' ID NEGASIT ');
+END;
+--SupraIncarcare
+PROCEDURE ModificaNume(pID elevi.id_elev%type, pNume elevi.nume%type) IS
+BEGIN
+if ExistaElev(pID) then
+update Elevi set nume=pNume where id_elev=pID;
+else
+raise exceptie;
+end if;
+EXCEPTION
+when exceptie then
+dbms_output.put_line(' ID NEGASIT ');
+END;
+PROCEDURE STERGEELEV(pID elevi.id_elev%type) IS
+BEGIN
+if ExistaElev(pID) then
+delete from Elevi where id_elev=pID;
+else
+raise exceptie;
+end if;
+EXCEPTION
+when exceptie then
+dbms_output.put_line(' ID NEGASIT pentru a-l putea sterge ');
+END;
 END;
 /
- 
-insert into tip_examen values (mysequence.nextval,'Practic');
----- Am schimbat incrementul la 2
- 
+Apelul procedurilor / funcțiilor din cadrul pachetului:
+execute ActualizareELEVI.AdaugaELEV(20,'Georgescu','Robert',25,3,4);
 
---6. Dezactivarea unui trigger
-ALTER TRIGGER RestrictUNIC DISABLE;
- 
---7. Compilarea unui trigger  --acelasi mesaj ca mai sus
-ALTER TRIGGER RestrictUNIC COMPILE;
---8. Stergerea  unui trigger
-DROP TRIGGER RestrictUNIC;
- 
+call actualizareelevi.ModificaNume(20,'Calin');
 
-
-
-
-
-
-
-
-
-
+begin 
+ actualizareelevi.ModificaNume(20,'Rares');
+ end ;
+ /
