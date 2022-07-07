@@ -1,104 +1,157 @@
--- 1.Se afi?eaz? printr-un ciclu FOR numele ?i salariile instructorilor cu categoria B
-set serveroutput on;
-declare
-cursor Parcurge is 
-select nume,sal 
-from instructori 
-where upper(Categorie) like '%B%';
+-- 1.  Sterg instructorii care au mai putin de 1 an experienta
+insert into instructori(id_instructor,nume,prenume,varsta,ani_experienta,categorie,sediu,sal,NrTelefon,Cod_Supervizor) values (12,'Test','Nou',18,0,'B',1,2350,0763654280,1);
+set serveroutput on
 begin
-for i in Parcurge
-loop
-dbms_output.put_line(i.nume||' '||i.sal);
-end loop;
-end; 
+delete from instructori where ani_experienta<1;
+dbms_output.put_line('Au fost afectate: '||sql%rowcount||' inregistrari');
+rollback;
+dbms_output.put_line('Au fost afectate: '||sql%rowcount||' inregistrari');
+end;
 /
- 
--- 2.Se afi?eaz? numarul elevilor al fiecarui instructor
-set serveroutput on;
-declare
+
+
+-- 2. Se incearca injumatatirea salariului unui instructor al carui id nu exista.
+
+set serveroutput on
 begin
-for i in (
-select i.id_instructor,i.nume, count(id_elev) Contor
-from instructori i, elevi e
-where i.id_instructor=e.id_instructor
-group by i.id_instructor,i.nume)
-loop
-dbms_output.put_line(i.nume||' are '||i.Contor|| ' elevi' );
-end loop;
-end; 
-/
- 
--- 3. Sa se afiseze instructorii care au salariul mai mare decat o variabila data de la tastatura
--- Dam valoarea 5999
-declare
-CURSOR myCursor(valoare number) is 
-select * from instructori where sal>valoare;
-variabilamyCursor myCursor%rowtype;
-valoareaMea number:=&valMea;
-begin 
-if not myCursor%isopen then
-open myCursor(valoareaMea);
+update instructori  set sal=sal*0.5 where id_instructor=14;
+IF SQL%NOTFOUND THEN
+dbms_output.put_line('ID Invalid: ');
 end if;
-LOOP
-fetch myCursor into variabilamyCursor;
-dbms_output.put_line(variabilamyCursor.nume);
-exit when myCursor%NOTFOUND;
-END LOOP;
+rollback;
 end;
 /
- 
 
 
 
--- 4.Pentru fiecare instructor sa se afiseze elevii
+
+-- 3. Se incearca stearga instructorii cu id dat de la tastatura
+ACCEPT g_rid PROMPT 'Introduceti id-ul instructorului:'
+VARIABLE nr_sters varchar2(100)
+DECLARE
+BEGIN
+DELETE FROM instructori WHERE id_instructor=&g_rid;
+:nr_sters:=TO_CHAR(SQL%ROWCOUNT)||' Instructori Stersi';
+END;
+ /
+PRINT nr_sters
+ROLLBACK;
+
+-- 4. Afiseaza toti instructorii care au si categoria B
 declare
---Cursor sa selecteze instructorii
-cursor CInstructor is
-select id_instructor,nume from instructori;
---Cursor care pt fiecare instructor afiseaza elevii
-cursor Elev(Vid_instructor number)
-is
-select e.nume
-from instructori i,elevi e
-where i.id_instructor=e.id_instructor
-and i.id_instructor=Vid_instructor
-order by i.id_instructor asc;
+cursor CursorInstructori is select nume,prenume,categorie from instructori  where upper(categorie) like '%B%'; --nu trb neaparat sa pun where
+vnume instructori.nume%type;
+vprenume instructori.prenume%type;
+vcategorie instructori.categorie%type;
 begin
-for i in CInstructor
+dbms_output.put_line('Lista cu instructori ');
+open CursorInstructori;
 loop
-dbms_output.put_line('Instructorul cu ID '||i.id_instructor||' si numele '|| i.nume||' are: ');
-    for j in Elev(i.id_instructor) LOOP
-    dbms_output.put_line('Elevul cu numele: '||j.nume);
-    END LOOP;
+fetch CursorInstructori into vnume,vprenume,vcategorie;
+exit when CursorInstructori%notfound;
+dbms_output.put_line('Instructorul '||vnume||' are categoria: '||vcategorie);
 end loop;
 end;
 /
 
 
- 
 
--- 5.Folosirea CURRENT OF , NO WAIT SI FOR UPDATE 
-Create table EleviCuInstructori
-as 
-select e.ID_ELEV IDELEV,e.nume NumeElev,e.prenume PrenumeElev,i.id_instructor IDiNSTRUCTOR,i.sal salariuInstructor
+
+
+-- 5. Afiseaza toti instructorii care au si categoria B – dar cu record
+declare
+cursor CursorInstructori is select nume,prenume,categorie from instructori  where upper(categorie) like '%B%'; --nu trb neaparat sa pun where
+type rec_instructori is record(
+vnume instructori.nume%type,
+vprenume instructori.prenume%type,
+vcategorie instructori.categorie%type);
+variabila_record rec_instructori;
+begin
+dbms_output.put_line('Lista cu instructori ');
+open CursorInstructori;
+loop
+fetch CursorInstructori into variabila_record;
+exit when CursorInstructori%notfound;
+dbms_output.put_line('Instructorul '||variabila_record.vnume||' are categoria: '||variabila_record.vcategorie);
+end loop;
+end; 
+/
+
+-- 6. Afiseaza toti instructorii care au si categoria B – dar cu rowtype
+
+declare
+cursor CursorInstructori is select nume,prenume,categorie from instructori  where upper(categorie) like '%B%'; --nu trb neaparat sa pun where
+variabila_record CursorInstructori%rowtype;
+begin
+dbms_output.put_line('Lista cu instructori ');
+open CursorInstructori;
+loop
+fetch CursorInstructori into variabila_record;
+exit when CursorInstructori%notfound;
+dbms_output.put_line('Instructorul '||variabila_record.nume||' are categoria: '||variabila_record.categorie);
+end loop;
+end; 
+/
+
+
+-- 7. Sa se incarce in tabela Elevi Jr Id elev nume si prenume la primii 5 elevi din tabela elevi
+Create Table EleviJr(
+id_elev number(2),
+nume varchar(20),
+prenume varchar(20)
+);
+declare 
+cursor Transfera is select id_elev,nume,prenume from elevi;
+varmea Transfera%rowtype;
+begin
+open Transfera;
+for i in 1..5 loop
+fetch Transfera into varmea;
+insert into EleviJr values(varmea.id_elev,varmea.nume,varmea.prenume);
+end loop;
+close Transfera;
+end; 
+/
+select * from elevijr;
+
+
+--8. Sa se incarce in tabela Elevi Jr Id elev nume si prenume la primii 5 elevi din tabela elevi
+-- Folosind ROWCOUNT
+
+declare 
+cursor Transfera is select id_elev,nume,prenume from elevi;
+varmea Transfera%rowtype;
+begin
+open Transfera;
+ loop
+fetch Transfera into varmea;
+exit when Transfera%rowcount<5 or transfera%notfound;
+insert into EleviJr values(varmea.id_elev,varmea.nume,varmea.prenume);
+end loop;
+close Transfera;
+end; 
+/
+
+
+-- 9. Sa se afiseze  primii 3 instructori si nr lor de elevi.
+
+declare
+cursor ContorElevi is 
+select i.nume,count(id_elev) ContorE 
 from elevi e,instructori i
 where e.id_instructor=i.id_instructor
-and upper(i.categorie) like '%B%';
-declare
-Cursor myCursor is select * from EleviCuInstructori for update of idelev nowait;
-myvar myCursor%rowtype;
+group by i.nume;
+variabilaMea ContorElevi%rowtype;
 begin
-for i in myCursor
-LOOP
-update EleviCuInstructori
-set salariuinstructor=salariuinstructor*1.19
-where current of myCursor;
-DBMS_OUTPUT.PUT_LINE('Noul salariu al instructorului '||i.numeinstructor||' este '||i.salariuinstructor);
-END LOOP;
-end;
-/
- 
- 
-
-
-
+DBMS_OUTPUT.PUT_LINE('Numarul de elevi pentru fiecare instructor:');
+if not ContorElevi%isopen  then
+open ContorElevi;
+end if;
+loop
+fetch ContorElevi into variabilaMea;
+exit when ContorElevi%notfound or ContorElevi%rowcount>3;
+dbms_output.put_line('Instructorul '||variabilamea.nume|| ' are '||variabilamea.ContorE|| ' elevi');
+end loop;
+close contorelevi;
+end; 
+ /
