@@ -26,7 +26,7 @@ end;
  
 
 
--- 2. Procedura calculeaz? salariul mediu ?i îl returneaz? printr-un parametru de tip OUT
+-- 2. Procedura calculeaz? salariul mediu ?i Ã®l returneaz? printr-un parametru de tip OUT
 create or replace procedure CalcSalMediu(Psal out number)
 is
 BEGIN
