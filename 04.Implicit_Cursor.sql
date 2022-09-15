@@ -3,7 +3,7 @@ insert into instructori(id_instructor,nume,prenume,varsta,ani_experienta,categor
 set serveroutput on
 begin
 delete from instructori where ani_experienta<1;
-dbms_output.put_line('Au fost afectate: '||sql%rowcount||' inregistrari');
+dbms_output.put_line('Au fost afectate : '||sql%rowcount||' inregistrari');
 rollback;
 dbms_output.put_line('Au fost afectate: '||sql%rowcount||' inregistrari');
 end;
